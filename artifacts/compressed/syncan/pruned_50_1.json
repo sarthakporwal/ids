@@ -1,0 +1,7 @@
+{
+  "magnitude": {
+    "target_sparsity": 0.5,
+    "epochs": 20,
+    "actual_sparsity": 0.497792465300727
+  }
+}

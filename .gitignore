@@ -1,0 +1,61 @@
+# Python
+*.pyc
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.egg-info/
+*.log
+*.out
+*/*.out
+
+# Virtual Environment
+canshield_env/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hydra outputs
+src/outputs/
+src/logs/
+
+# Large data files
+data*/
+plots*/
+
+# Exclude large model files but keep structure
+artifacts/models/**/*.h5
+artifacts/models/**/*.tflite
+artifacts/models/**/*.pb
+artifacts/models/**/*.keras
+
+# Keep visualizations and results (small files)
+!artifacts/visualizations/
+!artifacts/histories/
+!artifacts/robustness/
+!artifacts/evaluation_results/
+
+# Datasets (too large)
+datasets/
+src/datasets/
+
+# Temporary files
+*.tmp
+TODO.md
+
+# Package files  
+*.zip
+!canshield_colab_package.zip
+
+# Mambaforge installer
+Mambaforge-*.sh

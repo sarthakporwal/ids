@@ -1,0 +1,10 @@
+{
+  "dataset": "syncan",
+  "time_step": 50,
+  "num_signals": 20,
+  "sampling_period": 1,
+  "training_mode": "adversarial",
+  "num_samples": 148348,
+  "use_compression": true,
+  "use_uncertainty": true
+}

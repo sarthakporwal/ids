@@ -1,0 +1,29 @@
+{
+  "float16": {
+    "mse": 0.0013886747699401504,
+    "mae": 0.021008621149429835,
+    "original_mse": 0.0013888511601108497,
+    "accuracy_retention_%": 99.98729956270583,
+    "model_size_bytes": 85364,
+    "model_size_kb": 83.36328125,
+    "compression_ratio": 6.275338550208518
+  },
+  "dynamic": {
+    "mse": 0.0014452642370012352,
+    "mae": 0.02196519645938551,
+    "original_mse": 0.0013888511601108497,
+    "accuracy_retention_%": 95.9381481248226,
+    "model_size_bytes": 50568,
+    "model_size_kb": 49.3828125,
+    "compression_ratio": 10.593418762853979
+  },
+  "int8": {
+    "mse": 471.0015472361377,
+    "mae": 17.846152807621312,
+    "original_mse": 0.0013888511601108497,
+    "accuracy_retention_%": -33912832.639044285,
+    "model_size_bytes": 50200,
+    "model_size_kb": 49.0234375,
+    "compression_ratio": 10.671075697211155
+  }
+}

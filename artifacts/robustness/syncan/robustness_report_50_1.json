@@ -1,0 +1,84 @@
+{
+  "overall_score": {
+    "robustness_score": 0.6320376023799373,
+    "error_stability": 0.44902390228812317,
+    "perturbation_resistance": 1.0,
+    "attack_diversity_robustness": 0.4470889048516886,
+    "clean_error": 0.0027528537765615147,
+    "fgsm_error": 0.0033778974320739508,
+    "pgd_error": 0.003404431277886033
+  },
+  "perturbation_sensitivity": [
+    {
+      "epsilon": 0.001,
+      "fgsm_error_increase": 5.6917094392283565e-05,
+      "pgd_error_increase": 5.822420562575639e-05,
+      "fgsm_l2_perturbation": 0.02816347760865442,
+      "pgd_l2_perturbation": 0.02771693755507873,
+      "fgsm_max_error": 0.0067597911693155766,
+      "pgd_max_error": 0.006762287113815546
+    },
+    {
+      "epsilon": 0.005,
+      "fgsm_error_increase": 0.0002946015584744054,
+      "pgd_error_increase": 0.000308424480957492,
+      "fgsm_l2_perturbation": 0.13983580052919847,
+      "pgd_l2_perturbation": 0.13816564679755605,
+      "fgsm_max_error": 0.007222919724881649,
+      "pgd_max_error": 0.007245352957397699
+    },
+    {
+      "epsilon": 0.01,
+      "fgsm_error_increase": 0.000625043655512436,
+      "pgd_error_increase": 0.0006516489803321201,
+      "fgsm_l2_perturbation": 0.27817868974869314,
+      "pgd_l2_perturbation": 0.2731915401791058,
+      "fgsm_max_error": 0.007870949804782867,
+      "pgd_max_error": 0.007914175279438496
+    },
+    {
+      "epsilon": 0.02,
+      "fgsm_error_increase": 0.0014032020836598712,
+      "pgd_error_increase": 0.0011070924948431093,
+      "fgsm_l2_perturbation": 0.5530771902751036,
+      "pgd_l2_perturbation": 0.4792381391873854,
+      "fgsm_max_error": 0.009332153014838696,
+      "pgd_max_error": 0.008731418289244175
+    },
+    {
+      "epsilon": 0.05,
+      "fgsm_error_increase": 0.004614132237387403,
+      "pgd_error_increase": 0.0019320871352679569,
+      "fgsm_l2_perturbation": 1.3692304516136906,
+      "pgd_l2_perturbation": 1.052957867971106,
+      "fgsm_max_error": 0.014535355381667614,
+      "pgd_max_error": 0.009464515373110771
+    }
+  ],
+  "cross_attack_robustness": {
+    "fgsm": {
+      "avg_error": 0.0033778974320739508,
+      "max_error": 0.007870949804782867,
+      "error_increase": 0.000625043655512436,
+      "detection_rate": 0.162
+    },
+    "pgd": {
+      "avg_error": 0.003415294922888279,
+      "max_error": 0.007930529303848743,
+      "error_increase": 0.0006624411463267642,
+      "detection_rate": 0.172
+    },
+    "automotive": {
+      "avg_error": 0.0027454653119660228,
+      "max_error": 0.006602073664760648,
+      "error_increase": -7.388464595491952e-06,
+      "detection_rate": 0.046
+    },
+    "temporal": {
+      "avg_error": 0.004467090521404583,
+      "max_error": 0.0077525150273792184,
+      "error_increase": 0.001714236744843068,
+      "detection_rate": 0.585
+    }
+  }
+}
