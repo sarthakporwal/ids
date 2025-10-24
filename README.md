@@ -275,17 +275,6 @@ Comprehensive guides included:
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/NewFeature`)
-3. Commit your changes (`git commit -m 'Add NewFeature'`)
-4. Push to the branch (`git push origin feature/NewFeature`)
-5. Open a Pull Request
-
----
 
 ## 📄 License
 
@@ -301,7 +290,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 This project builds upon:
 - **SynCAN Dataset**: [ETAS SynCAN](https://github.com/etas/SynCAN)
@@ -318,14 +307,4 @@ This project builds upon:
 - [ ] Online learning capabilities
 - [ ] Multi-protocol support (CAN-FD, FlexRay)
 - [ ] Mobile deployment (iOS/Android)
-
----
-
-## ⭐ Star History
-
-If you find this project useful, please consider giving it a star! ⭐
-
----
-
-**Built with ❤️ for automotive cybersecurity research**
 
