@@ -4,7 +4,7 @@
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)](https://www.tensorflow.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## 🛡️ Adversarially Robust Deep Learning IDS for Controller Area Network
+##  Adversarially Robust Deep Learning IDS for Controller Area Network
 
 An advanced intrusion detection system designed to identify and defend against cyberattacks on CAN bus networks in connected and autonomous vehicles. This system combines deep learning with adversarial robustness techniques to achieve state-of-the-art detection performance.
 
@@ -273,12 +273,6 @@ Comprehensive guides included:
 | LSTM-Based | 0.87 | 0.65 | 8 MB | ~30ms |
 | CNN-Based | 0.89 | 0.70 | 12 MB | ~25ms |
 
----
-
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -296,15 +290,11 @@ This project builds upon:
 - **SynCAN Dataset**: [ETAS SynCAN](https://github.com/etas/SynCAN)
 - **Original CANShield**: Research paper on signal-level CAN IDS
 - **TensorFlow & Keras**: Deep learning frameworks
-- **Open Source Community**: Various libraries and tools
 
 ---
 
 ## 📈 Future Work
 
 - [ ] Support for additional CAN datasets (ROAD, Car-Hacking)
-- [ ] Explainability features (SHAP, attention maps)
-- [ ] Online learning capabilities
-- [ ] Multi-protocol support (CAN-FD, FlexRay)
 - [ ] Mobile deployment (iOS/Android)
 
