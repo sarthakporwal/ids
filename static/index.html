@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CANShield IDS - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>CANShield IDS</h1>
+            </div>
+            <nav class="nav">
+                <a href="#dashboard" class="nav-link active">Dashboard</a>
+                <a href="#upload" class="nav-link">Upload</a>
+                <a href="#results" class="nav-link">Results</a>
+                <a href="#analytics" class="nav-link">Analytics</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- Hero Section -->
+            <section class="hero">
+                <h2>Adversarially Robust Deep Learning IDS for CAN Bus</h2>
+                <p>Real-time intrusion detection and visualization for automotive security</p>
+            </section>
+
+            <!-- Status Cards -->
+            <section class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>System Status</h3>
+                        <p class="metric-value" id="systemStatus">Active</p>
+                        <span class="metric-change positive">Running</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Samples Processed</h3>
+                        <p class="metric-value" id="samplesProcessed">0</p>
+                        <span class="metric-change">Total samples</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Attacks Detected</h3>
+                        <p class="metric-value" id="attacksDetected">0</p>
+                        <span class="metric-change negative" id="attackRate">0%</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Robustness Score</h3>
+                        <p class="metric-value">89.8%</p>
+                        <span class="metric-change positive">+5.2%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section" id="upload">
+                <div class="card">
+                    <h2><i class="fas fa-upload"></i> Dataset Upload</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Drag & Drop CSV File</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="fileInput" accept=".csv" hidden>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open"></i> Browse Files
+                        </button>
+                    </div>
+                    <div class="upload-status" id="uploadStatus"></div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-cog"></i> Detection Settings</h2>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label for="threshold">Detection Threshold</label>
+                            <input type="range" id="threshold" min="0.0001" max="0.01" value="0.005" step="0.0001">
+                            <span id="thresholdValue">0.005</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="windowSize">Time Window</label>
+                            <select id="windowSize">
+                                <option value="25">25 timesteps</option>
+                                <option value="50" selected>50 timesteps</option>
+                                <option value="75">75 timesteps</option>
+                                <option value="100">100 timesteps</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-success btn-large" id="runDetectionBtn">
+                        <i class="fas fa-play"></i> Run Detection
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="results">
+                <div class="card">
+                    <h2><i class="fas fa-chart-line"></i> Real-Time Reconstruction Error</h2>
+                    <div id="errorChart" style="width:100%;height:400px;"></div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-list"></i> Attack Detection Timeline</h2>
+                    <div class="table-container">
+                        <table id="attackTable">
+                            <thead>
+                                <tr>
+                                    <th>Sample ID</th>
+                                    <th>Attack Type</th>
+                                    <th>Error</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attackTableBody">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #999;">
+                                        No attacks detected. Upload a dataset and run detection.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section class="analytics-section" id="analytics">
+                <div class="analytics-grid">
+                    <div class="card">
+                        <h2><i class="fas fa-pie-chart"></i> Attack Distribution</h2>
+                        <div id="attackPieChart" style="width:100%;height:350px;"></div>
+                    </div>
+                    <div class="card">
+                        <h2><i class="fas fa-chart-bar"></i> Error Histogram</h2>
+                        <div id="errorHistogram" style="width:100%;height:350px;"></div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>🛡️ <strong>CANShield IDS</strong> - Adversarially Robust Deep Learning for CAN Bus Security</p>
+            <p>Developed with ❤️ | Powered by TensorFlow</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
+

@@ -48,6 +48,9 @@ artifacts/models/**/*.keras
 # Datasets (too large)
 datasets/
 src/datasets/
+train_1.csv
+train_*.csv
+!sampled_train_1.csv
 
 # Temporary files
 *.tmp

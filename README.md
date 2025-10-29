@@ -273,7 +273,6 @@ Comprehensive guides included:
 | LSTM-Based | 0.87 | 0.65 | 8 MB | ~30ms |
 | CNN-Based | 0.89 | 0.70 | 12 MB | ~25ms |
 
-
 ---
 
 ## 📧 Contact
@@ -288,7 +287,6 @@ Comprehensive guides included:
 
 This project builds upon:
 - **SynCAN Dataset**: [ETAS SynCAN](https://github.com/etas/SynCAN)
-- **Original CANShield**: Research paper on signal-level CAN IDS
 - **TensorFlow & Keras**: Deep learning frameworks
 
 ---
@@ -297,4 +295,3 @@ This project builds upon:
 
 - [ ] Support for additional CAN datasets (ROAD, Car-Hacking)
 - [ ] Mobile deployment (iOS/Android)
-
