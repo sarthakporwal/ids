@@ -76,26 +76,6 @@ pip install tensorflow-model-optimization
 pip install hydra-core scikit-learn pandas numpy matplotlib seaborn
 ```
 
-### Dataset
-
-Download the SynCAN dataset:
-
-```bash
-cd src
-chmod +x download_syncan_dataset.sh
-./download_syncan_dataset.sh
-```
-
-### Training
-
-```bash
-# Train robust model
-python run_robust_canshield.py training_mode=adversarial
-
-# Evaluate on attacks
-python run_robust_evaluation.py
-```
-
 ### Visualization
 
 ```bash
@@ -105,25 +85,6 @@ python visualize_results.py
 # View results
 open artifacts/visualizations/
 ```
-
----
-
-## 📈 Training on Google Colab (Recommended)
-
-For faster training with better results:
-
-1. **Package your code**: `./prepare_for_colab.sh`
-2. **Upload to Colab**: Drag `canshield_colab_package.zip`
-3. **Follow guide**: See `START_COLAB_NOW.md`
-4. **Train**: Get 0.93-0.95 F1-score in 25 minutes!
-
-**Benefits:**
-- ✅ 3-4x faster training
-- ✅ 5x more training data
-- ✅ Free Tesla T4 GPU
-- ✅ Better accuracy
-
-See [`COLAB_QUICK_START.md`](COLAB_QUICK_START.md) for details.
 
 ---
 
@@ -172,30 +133,6 @@ Attack Classification
    - Confidence calibration
 
 ---
-
-## 📁 Project Structure
-
-```
-ids/
-├── src/
-│   ├── adversarial/          # Adversarial robustness
-│   │   ├── attacks.py
-│   │   ├── adversarial_training.py
-│   │   └── robustness_metrics.py
-│   ├── domain_adaptation/    # Cross-vehicle generalization
-│   ├── model_compression/    # Deployment optimization
-│   ├── uncertainty/          # Confidence estimation
-│   ├── dataset/              # Data loading
-│   └── training/             # Core training
-├── config/                   # Configuration files
-├── artifacts/
-│   ├── models/               # Trained models
-│   ├── visualizations/       # Graphs and plots
-│   └── evaluation_results/   # Performance metrics
-└── docs/                     # Documentation
-
-```
-
 ---
 
 ## 🎨 Visualizations
@@ -232,37 +169,10 @@ The system generates professional visualizations:
 
 ---
 
-## 📚 Documentation
-
-Comprehensive guides included:
 
 - **[FINAL_OUTPUT_GUIDE.md](FINAL_OUTPUT_GUIDE.md)** - Understanding your results
-- **[TRAINING_COMPLETE_NEXT_STEPS.md](TRAINING_COMPLETE_NEXT_STEPS.md)** - Post-training guide
-- **[ROBUST_CANSHIELD_GUIDE.md](ROBUST_CANSHIELD_GUIDE.md)** - Feature documentation
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Technical details
-- **[START_COLAB_NOW.md](START_COLAB_NOW.md)** - Google Colab training
-- **[MEMORY_OPTIMIZED_TRAINING.md](MEMORY_OPTIMIZED_TRAINING.md)** - 8GB RAM guide
 
----
 
-## 🎯 Use Cases
-
-### Automotive Security
-- Real-time CAN bus monitoring
-- Attack detection in connected vehicles
-- Anomaly detection in ECU communications
-
-### Research & Development
-- Adversarial robustness research
-- Transfer learning across vehicle models
-- Model compression techniques
-
-### Production Deployment
-- Edge device deployment
-- Embedded systems integration
-- Real-time inference systems
-
----
 
 ## 📊 Comparison with State-of-the-Art
 
@@ -272,14 +182,6 @@ Comprehensive guides included:
 | CANet | 0.95 | N/A | 15 MB | ~50ms |
 | LSTM-Based | 0.87 | 0.65 | 8 MB | ~30ms |
 | CNN-Based | 0.89 | 0.70 | 12 MB | ~25ms |
-
----
-
-## 📧 Contact
-
-**Sarthak Porwal**
-- GitHub: [@sarthakporwal](https://github.com/sarthakporwal)
-- Repository: [https://github.com/sarthakporwal/ids](https://github.com/sarthakporwal/ids)
 
 ---
 
