@@ -1,9 +1,5 @@
 # Intrusion Detecting System for CAN Bus
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)](https://www.tensorflow.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
 ##  Adversarially Robust Deep Learning IDS for Controller Area Network
 
 An advanced intrusion detection system designed to identify and defend against cyberattacks on CAN bus networks in connected and autonomous vehicles. This system combines deep learning with adversarial robustness techniques to achieve state-of-the-art detection performance.
