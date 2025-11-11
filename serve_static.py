@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-"""
-Simple HTTP server for CANShield static HTML interface
-"""
 
 import http.server
 import socketserver
@@ -17,7 +13,6 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(DIRECTORY), **kwargs)
     
     def end_headers(self):
-        # Enable CORS
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
@@ -44,10 +39,8 @@ def main():
         print("\nPress Ctrl+C to stop the server\n")
         print("=" * 60)
         
-        # Open browser
         webbrowser.open(f'http://localhost:{PORT}')
         
-        # Start server
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

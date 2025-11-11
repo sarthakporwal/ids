@@ -133,8 +133,7 @@ def plot_auc_improvement_with_three_steps(args, heatmap_auc_dict):
         for ax, file_name in zip(axs, testing_files):
             value = heatmap_auc_dict[f"{file_name}_{time_step}_{sampling_period}"][0].iloc[:-2,:-2][::-1]
             value.index = np.ceil(np.array(value.index)).astype(int)
-            # print(np.array(value.columns).astype(float))
-            value.columns = np.array(value.columns).astype(float) #np.ceil(np.array(value.columns)).astype(int)
+            value.columns = np.array(value.columns).astype(float)
             base = round(heatmap_auc_dict[f"{file_name}_{time_step}_{sampling_period}"][1],3)
             cbar = True if ax == axs[-1] else False
             sns.heatmap(value,  cmap="PiYG", vmin = -0.03, vmax = 0.03, square = False, cbar = cbar, xticklabels = 3, yticklabels = 3, ax = ax)
@@ -150,7 +149,6 @@ def plot_auc_improvement_with_three_steps(args, heatmap_auc_dict):
         fig_dir.parent.mkdir(parents=True, exist_ok=True)
         plt.savefig(f"{fig_dir}.jpg", dpi = 250)
         plt.savefig(f"{fig_dir}.pdf", dpi = 250)
-        # plt.show()
 
 def anomalyScores_for_diff_canshields(args):
     loss_factor = args.loss_factor
@@ -175,7 +173,7 @@ def anomalyScores_for_diff_canshields(args):
                 label_file_name = f"label_{file_name}_{time_step}_{sampling_period}_{per_of_samples}"
                 label_file_dir = f"{root_dir}/../data/label/{dataset_name}/{label_file_name}.csv"
                 prediction_df = pd.concat([prediction_df, pd.read_csv(label_file_dir, index_col=False)], ignore_index=True)
-            except FileNotFoundError: #TODO : Fix genereated discripancies
+            except FileNotFoundError:
                 label_file_name = f"label_{file_name}_generated_{time_step}_{sampling_period}_{per_of_samples}"
                 label_file_dir = f"{root_dir}/../data/label/{dataset_name}/{label_file_name}.csv"
                 prediction_df = pd.concat([prediction_df, pd.read_csv(label_file_dir, index_col=False)], ignore_index=True)
@@ -223,13 +221,11 @@ def plot_anomalyScores_for_diff_canshields(args, prediction_df_final):
         prediction_df_final_cut['Sampling Period'] = prediction_df_final_cut['Sampling Period'].astype(int)
         print("prediction_df_final_cut: ", prediction_df_final_cut)
 
-        sns.boxplot(x="Sampling Period", y="Loss",  data= prediction_df_final_cut, ax = ax) #hue="Sampling Period", hue = 'Label',
+        sns.boxplot(x="Sampling Period", y="Loss",  data= prediction_df_final_cut, ax = ax)
         ax.legend().set_visible(False)
-        # adding transparency to colors
         for patch in ax.artists:
             r, g, b, a = patch.get_facecolor()
             patch.set_facecolor((r, g, b, .3))
-        # sns.violinplot(x="Sampling Period", y="Loss",  data= prediction_df_final_cut, alpha = 0.5, ax = ax) #hue="Sampling Period",
         if ax != axes[0]:
             ax.set(ylabel=None)
         else:
@@ -240,7 +236,7 @@ def plot_anomalyScores_for_diff_canshields(args, prediction_df_final):
         else:
             ax.set_xlabel("Sampling Period", fontsize = 12)
 
-        ax.set_title(f"{attack_name}", fontweight='bold', fontsize = 12) #    axs[file_index].set_title(f"{file_name} attack", fontweight='bold')
+        ax.set_title(f"{attack_name}", fontweight='bold', fontsize = 12)
         
     plt.tight_layout()
     fig_dir = Path(f"{root_dir}/../plots/{dataset_name}/attack-wise-loss-for-diff-sp_box")

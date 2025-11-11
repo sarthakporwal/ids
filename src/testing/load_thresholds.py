@@ -107,54 +107,27 @@ def generate_and_save_prediction_loss_per_file(args, file_name, file_path, run_t
         lite_model_dir = f"{root_dir}/../artifacts/models/{dataset_name}/autoendoer_canshield_lite_{dataset_name}_{time_step}_{num_signals}_{sampling_period}.tflite"
         open(lite_model_dir , "wb") .write(tflite_model)
         interpreter = tf.lite.Interpreter(model_path = lite_model_dir)
-        # Get lite model
 
-        # Get input/output information
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
 
-        # Adjust graph input to handle batch tensor
-        interpreter.resize_tensor_input(input_details[0]['index'], x_seq.shape) #(batch_size, 512, 512, 3)
+        interpreter.resize_tensor_input(input_details[0]['index'], x_seq.shape)
 
-        # Adjust output #1 in graph to handle batch tensor
-        interpreter.resize_tensor_input(output_details[0]['index'], x_seq.shape) #(batch_size, 512, 512, 3)
+        interpreter.resize_tensor_input(output_details[0]['index'], x_seq.shape)
 
-        # # Adjust output #2 in graph to handle batch tensor
-        # output_shape = output_details[1]['shape']
-        # interpreter.resize_tensor_input(output_details[1]['index'], (batch_input.shape[0], output_shape[1], output_shape[2], output_shape[3])) #(batch_size, 512, 512, 18)
-        # Allocate for the resizing operations
         interpreter.allocate_tensors()
-        # Set input tensor
         interpreter.set_tensor(input_details[0]['index'], x_seq.astype(np.float32))
-        # Run
         interpreter.invoke()
-        # Output
         output_details = interpreter.get_output_details()
         x_recon = interpreter.get_tensor(output_details[0]['index'])
 
-        # # Run inference
-        # # print("interpreters", interpreters)
-        # interpreter.allocate_tensors() 
-        # #get input and output tensors
-        # input_details = interpreter.get_input_details()
-        # output_details = interpreter.get_output_details()
 
-        # #set the tensor to point to the input data to be inferred
-        # input_index = input_details[0]["index"]
-        # interpreter.set_tensor(input_index, x_seq.astype(np.float32))
-        # #Run the inference
-        # interpreter.invoke()
-        # output_details = interpreter.get_output_details()
-        # # Output
-        # x_recon = interpreter.get_tensor(output_details[0]['index'])
     
     y_train_prob_org = calc_loss(x_seq, x_recon)[:,:,:,0]
     return y_train_prob_org, y_seq
 
 def generate_and_save_prediction_loss(args, file_dir_dict, y_prob_org_dict):
 
-    # args.time_step = int(node.th_name.split("_")[2])
-    # args.sampling_period = int(node.th_name.split("_")[3])
 
     time_step =args.time_step
     sampling_period = args.sampling_period
@@ -177,7 +150,6 @@ def generate_and_save_prediction_loss(args, file_dir_dict, y_prob_org_dict):
 def generate_and_save_loss_data(node, file_dir_dict, y_train_prob_org_dict, loss_factors):
 
     print("Starting : generate_and_save_loss_data")
-    #do something
     args = node.th_name.split("_")
     th_type = args[1]
     dataset_name = args[2]
@@ -202,14 +174,12 @@ def generate_and_save_loss_data(node, file_dir_dict, y_train_prob_org_dict, loss
 
             for loss_factor in loss_factors:
                 th = np.percentile(y_train_prob_signal, loss_factor)
-                # th_values['file'] = file_name
                 th_values['sampling_period'] = sampling_period
                 th_values['time_step'] = time_step
                 th_values['loss_factor'] = loss_factor
                 th_values['th'] = th 
                 th_values['Signal'] = Signal
                 th_loss_df = pd.concat([th_loss_df, pd.DataFrame(th_values, index = [0])], ignore_index= True)
-                #-------------------------------------------------------------------------------------------
     ths_loss = th_loss_df.groupby(['time_step', 'sampling_period', 'loss_factor', 'Signal']).mean().reset_index()
     file_dir_ths_loss = Path(f'../data/thresholds/{dataset_name}/{node.th_name}.csv')
     file_dir_ths_loss.parent.mkdir(exist_ok=True, parents=True)
@@ -221,7 +191,6 @@ def generate_and_save_loss_data(node, file_dir_dict, y_train_prob_org_dict, loss
 def generate_and_save_time_data(node, file_dir_dict, loss_df, y_train_prob_org_dict, time_factors):
 
     print("Starting : generate_and_save_loss_data")
-    #do something
     args = node.th_name.split("_")
     th_type = args[1]
     dataset_name = args[2]
@@ -253,7 +222,6 @@ def generate_and_save_time_data(node, file_dir_dict, loss_df, y_train_prob_org_d
         for Signal, y_train_prob_org_bin_count_each in enumerate(y_train_prob_org_bin_count.T):
             for time_factor in time_factors:
                 th = np.percentile(y_train_prob_org_bin_count_each, time_factor)
-                # th_values['file'] = file_name
                 th_values['time_step'] = time_step
                 th_values['sampling_period'] = sampling_period
                 th_values['loss_factor'] = loss_factor
@@ -261,7 +229,6 @@ def generate_and_save_time_data(node, file_dir_dict, loss_df, y_train_prob_org_d
                 th_values['th'] = th 
                 th_values['Signal'] = Signal
                 th_time_df = pd.concat([th_time_df, pd.DataFrame(th_values, index = [0])], ignore_index= True)
-                #-----------
 
     ths_time = th_time_df.groupby(['time_step', 'sampling_period', 'loss_factor', 'time_factor', 'Signal']).mean().reset_index()
     file_dir_ths_time = Path(f'../data/thresholds/{dataset_name}/{node.th_name}.csv')
@@ -274,7 +241,6 @@ def generate_and_save_time_data(node, file_dir_dict, loss_df, y_train_prob_org_d
 def generate_and_save_signal_data(node, file_dir_dict, loss_df, time_df, y_train_prob_org_dict, signal_factors):
 
     print("Starting : generate_and_save_signal_data")
-    #do something
     args = node.th_name.split("_")
     th_type = args[1]
     dataset_name = args[2]
@@ -294,7 +260,6 @@ def generate_and_save_signal_data(node, file_dir_dict, loss_df, time_df, y_train
             y_train_prob_org = y_train_prob_org_dict[f"{file_name}_{time_step}_{sampling_period}"].copy()
         except:
             print("Prediction data does not exist!!!")
-        #-------------  Training -----------------
         ths_loss_image = np.squeeze(loss_df[loss_df['loss_factor'] == loss_factor]['th'].values)
         y_train_prob_org_bin = (y_train_prob_org> ths_loss_image).astype(int).copy()
         y_train_prob_org_bin_count = np.sum(y_train_prob_org_bin, 1)/time_step
@@ -308,7 +273,6 @@ def generate_and_save_signal_data(node, file_dir_dict, loss_df, time_df, y_train
         for signal_factor in signal_factors:
             th = np.percentile(y_train_prob_org_sig_count, signal_factor)
             th_values = {}
-            # th_values['file'] = file_name
             th_values['time_step'] = time_step
             th_values['sampling_period'] = sampling_period
             th_values['loss_factor'] = loss_factor

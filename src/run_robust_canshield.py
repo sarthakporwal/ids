@@ -1,7 +1,3 @@
-"""
-Robust CANShield Training Pipeline
-Main script for training adversarially robust, cross-vehicle generalizable CANShield
-"""
 
 import sys
 from pathlib import Path
@@ -10,7 +6,6 @@ from omegaconf import DictConfig
 import numpy as np
 import json
 
-# Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from dataset.load_dataset import *
@@ -26,12 +21,6 @@ from domain_adaptation.domain_adversarial import create_domain_adaptive_model
 
 @hydra.main(version_base=None, config_path="../config", config_name="robust_canshield")
 def train_robust_canshield(args: DictConfig) -> None:
-    """
-    Main training function for robust CANShield
-    
-    Args:
-        args: Configuration arguments
-    """
     print("="*70)
     print("ROBUST CANSHIELD - Adversarially Robust CAN-IDS")
     print("="*70)
@@ -44,8 +33,7 @@ def train_robust_canshield(args: DictConfig) -> None:
     dataset_name = args.dataset_name
     num_signals = args.num_signals
     
-    # Training mode selection
-    training_mode = args.get('training_mode', 'adversarial')  # Options: standard, adversarial, domain_adaptive
+    training_mode = args.get('training_mode', 'adversarial')
     use_compression = args.get('use_compression', True)
     use_uncertainty = args.get('use_uncertainty', True)
     
@@ -56,7 +44,6 @@ def train_robust_canshield(args: DictConfig) -> None:
     print(f"  Use Uncertainty: {use_uncertainty}")
     print(f"  Root Directory: {root_dir}")
     
-    # Iterate over different temporal scales
     for time_step in args.time_steps:
         for sampling_period in args.sampling_periods:
             print(f"\n{'='*70}")
@@ -67,10 +54,8 @@ def train_robust_canshield(args: DictConfig) -> None:
             args.sampling_period = sampling_period
             args.window_step = args.window_step_train
             
-            # Get base autoencoder architecture
             autoencoder, retrain = get_autoencoder(args)
             
-            # Load training data
             print("\nLoading training data...")
             file_dir_dict = get_list_of_files(args)
             
@@ -78,7 +63,6 @@ def train_robust_canshield(args: DictConfig) -> None:
                 print("ERROR: No training files found!")
                 continue
             
-            # MEMORY FIX: Load only first file to avoid OOM on 8GB RAM
             print("\n⚠️  Memory optimization: Using first training file only")
             print("   (To use all files, increase your RAM or reduce window_step_train)")
             
@@ -96,7 +80,6 @@ def train_robust_canshield(args: DictConfig) -> None:
                 print("ERROR: No data loaded successfully!")
                 continue
             
-            # ========== TRAINING BASED ON MODE ==========
             
             if training_mode == 'adversarial':
                 print("\n" + "="*70)
@@ -111,7 +94,6 @@ def train_robust_canshield(args: DictConfig) -> None:
                     use_adversarial=True
                 )
                 
-                # Evaluate robustness
                 print("\nEvaluating adversarial robustness...")
                 evaluator = RobustnessEvaluator(trained_model)
                 
@@ -131,22 +113,18 @@ def train_robust_canshield(args: DictConfig) -> None:
                 print("DOMAIN ADAPTIVE TRAINING")
                 print("="*70)
                 
-                # Create domain adaptive model
                 da_model = create_domain_adaptive_model(time_step, num_signals, num_domains=2)
                 
-                # Split data for source/target (simulate multi-vehicle)
                 split_idx = len(x_train_combined) // 2
                 x_source = x_train_combined[:split_idx]
                 x_target = x_train_combined[split_idx:]
                 
-                # Create domain labels (one-hot)
                 domain_labels_source = np.zeros((len(x_source), 2))
                 domain_labels_source[:, 0] = 1
                 
                 domain_labels_target = np.zeros((len(x_target), 2))
                 domain_labels_target[:, 1] = 1
                 
-                # Train
                 history = da_model.train(
                     x_source, x_target,
                     domain_labels_source, domain_labels_target,
@@ -154,7 +132,6 @@ def train_robust_canshield(args: DictConfig) -> None:
                     batch_size=128
                 )
                 
-                # Get regular autoencoder for saving
                 trained_model = da_model.get_autoencoder()
             
             elif training_mode == 'bayesian':
@@ -171,13 +148,12 @@ def train_robust_canshield(args: DictConfig) -> None:
                 
                 trained_model = bayesian_ae.model
                 
-                # Test uncertainty estimation
                 print("\nTesting uncertainty estimation...")
                 x_test_sample = x_train_combined[:100]
                 uncertainty_results = bayesian_ae.predict_with_uncertainty(x_test_sample, num_samples=30)
                 print(f"  Epistemic Uncertainty: {uncertainty_results['epistemic_uncertainty']:.6f}")
             
-            else:  # standard training
+            else:
                 print("\n" + "="*70)
                 print("STANDARD TRAINING")
                 print("="*70)
@@ -190,14 +166,12 @@ def train_robust_canshield(args: DictConfig) -> None:
                     use_adversarial=False
                 )
             
-            # ========== MODEL COMPRESSION ==========
             
             if use_compression:
                 print("\n" + "="*70)
                 print("MODEL COMPRESSION")
                 print("="*70)
                 
-                # Quantization
                 print("\n1. Quantization...")
                 quantizer = ModelQuantizer(trained_model)
                 
@@ -217,7 +191,6 @@ def train_robust_canshield(args: DictConfig) -> None:
                 print(f"  Compression: {quantization_results['int8']['compression_ratio']:.2f}x")
                 print(f"  Accuracy Retention: {quantization_results['int8']['accuracy_retention_%']:.2f}%")
                 
-                # Pruning
                 print("\n2. Pruning...")
                 pruner = ModelPruner(trained_model)
                 pruned_model, _ = pruner.magnitude_based_pruning(
@@ -232,7 +205,6 @@ def train_robust_canshield(args: DictConfig) -> None:
                                    f"pruned_{time_step}_{sampling_period}.h5"
                 pruner.export_pruned_model(pruned_model, pruning_save_path)
             
-            # ========== SAVE MAIN MODEL ==========
             
             model_dir = f"{root_dir}/../artifacts/models/{dataset_name}/" \
                        f"robust_canshield_{training_mode}_{time_step}_{num_signals}_{sampling_period}.h5"
@@ -241,7 +213,6 @@ def train_robust_canshield(args: DictConfig) -> None:
             trained_model.save(model_dir)
             print(f"\n✓ Model saved to: {model_dir}")
             
-            # Save training metadata
             metadata = {
                 'dataset': dataset_name,
                 'time_step': time_step,

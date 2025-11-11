@@ -2,7 +2,6 @@ from tqdm import tqdm
 import hydra
 from omegaconf import DictConfig
 from dataset.load_dataset import *
-# from hydra.utils import get_original_cwd
 from training import *
 
 
@@ -19,18 +18,13 @@ def develop_canshield(args : DictConfig) -> None:
 
     for time_step in args.time_steps:
         for sampling_period in args.sampling_periods:
-            # Sep-up variable to define the AE model
             args.time_step = time_step
             args.sampling_period = sampling_period
             args.window_step = args.window_step_train
             print(f"Starting thresholding with args.window_step: {args.window_step}")
 
-            # Train individual AE for each combination
             autoencoder, retrain = get_autoencoder(args)
 
-            # if retrain == False:
-            #     print("Model already trained.")
-            #     return None
             
             file_dir_dict = get_list_of_files(args)
             print("file_dir_dict: ", file_dir_dict)

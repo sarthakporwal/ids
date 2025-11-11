@@ -12,7 +12,6 @@ from sklearn.metrics import roc_auc_score
 
 from os.path import exists as file_exists    
 
-#pred_missing_df = find_missing_files (args, test_file_dir_dict)
 def find_missing_files (args, test_file_dir_dict):
     dataset_name = args.dataset_name
     time_steps = args.time_steps

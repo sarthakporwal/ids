@@ -1,7 +1,3 @@
-"""
-Model Pruning for Size Reduction
-Implements structured and unstructured pruning techniques
-"""
 
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
@@ -11,35 +7,15 @@ import json
 
 
 class ModelPruner:
-    """Handles model pruning operations"""
     
     def __init__(self, model):
-        """
-        Initialize model pruner
-        
-        Args:
-            model: Keras model to prune
-        """
         self.model = model
         self.pruning_info = {}
     
     def magnitude_based_pruning(self, x_train, target_sparsity=0.5, 
                                 epochs=50, batch_size=128):
-        """
-        Apply magnitude-based weight pruning
-        
-        Args:
-            x_train: Training data
-            target_sparsity: Target sparsity (0.5 = 50% weights pruned)
-            epochs: Number of epochs
-            batch_size: Batch size
-            
-        Returns:
-            Pruned model and history
-        """
         print(f"Applying magnitude-based pruning (target sparsity: {target_sparsity})...")
         
-        # Define pruning schedule
         pruning_params = {
             'pruning_schedule': tfmot.sparsity.keras.PolynomialDecay(
                 initial_sparsity=0.0,
@@ -49,25 +25,21 @@ class ModelPruner:
             )
         }
         
-        # Apply pruning
         model_for_pruning = tfmot.sparsity.keras.prune_low_magnitude(
             self.model,
             **pruning_params
         )
         
-        # Compile
         model_for_pruning.compile(
             optimizer='adam',
             loss='mse',
             metrics=['mae']
         )
         
-        # Callbacks
         callbacks = [
             tfmot.sparsity.keras.UpdatePruningStep(),
         ]
         
-        # Train with pruning
         history = model_for_pruning.fit(
             x_train, x_train,
             epochs=epochs,
@@ -77,7 +49,6 @@ class ModelPruner:
             verbose=1
         )
         
-        # Strip pruning wrappers
         pruned_model = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
         
         self.pruning_info['magnitude'] = {
@@ -89,25 +60,11 @@ class ModelPruner:
         return pruned_model, history
     
     def structured_pruning(self, x_train, pruning_ratio=0.3, epochs=50, batch_size=128):
-        """
-        Apply structured pruning (prune entire filters/neurons)
-        
-        Args:
-            x_train: Training data
-            pruning_ratio: Ratio of filters to prune
-            epochs: Number of epochs
-            batch_size: Batch size
-            
-        Returns:
-            Pruned model
-        """
         print(f"Applying structured pruning (ratio: {pruning_ratio})...")
         
-        # Clone model
         pruned_model = tf.keras.models.clone_model(self.model)
         pruned_model.set_weights(self.model.get_weights())
         
-        # Identify layers to prune (Conv2D layers)
         conv_layers = [i for i, layer in enumerate(pruned_model.layers) 
                       if isinstance(layer, tf.keras.layers.Conv2D)]
         
@@ -116,17 +73,14 @@ class ModelPruner:
             weights = layer.get_weights()
             
             if len(weights) > 0:
-                kernel = weights[0]  # Shape: (h, w, in_channels, out_channels)
+                kernel = weights[0]
                 
-                # Compute filter importance (L1 norm)
                 filter_norms = np.sum(np.abs(kernel), axis=(0, 1, 2))
                 
-                # Determine filters to keep
                 num_filters = len(filter_norms)
                 num_keep = int(num_filters * (1 - pruning_ratio))
                 keep_indices = np.argsort(filter_norms)[-num_keep:]
                 
-                # Prune filters
                 new_kernel = kernel[:, :, :, keep_indices]
                 
                 if len(weights) > 1:
@@ -135,7 +89,6 @@ class ModelPruner:
                 else:
                     layer.set_weights([new_kernel])
         
-        # Recompile and fine-tune
         pruned_model.compile(
             optimizer='adam',
             loss='mse',
@@ -159,20 +112,6 @@ class ModelPruner:
     
     def iterative_pruning(self, x_train, x_val, num_iterations=5, 
                          sparsity_per_iteration=0.2, epochs_per_iter=20, batch_size=128):
-        """
-        Iterative pruning with fine-tuning
-        
-        Args:
-            x_train: Training data
-            x_val: Validation data
-            num_iterations: Number of pruning iterations
-            sparsity_per_iteration: Sparsity increase per iteration
-            epochs_per_iter: Epochs per iteration
-            batch_size: Batch size
-            
-        Returns:
-            Final pruned model and history
-        """
         print(f"Starting iterative pruning ({num_iterations} iterations)...")
         
         current_model = self.model
@@ -180,7 +119,7 @@ class ModelPruner:
         
         for iteration in range(num_iterations):
             current_sparsity = sparsity_per_iteration * (iteration + 1)
-            current_sparsity = min(current_sparsity, 0.9)  # Cap at 90%
+            current_sparsity = min(current_sparsity, 0.9)
             
             print(f"\nIteration {iteration+1}/{num_iterations} - Target sparsity: {current_sparsity:.2f}")
             
@@ -192,7 +131,6 @@ class ModelPruner:
                 batch_size=batch_size
             )
             
-            # Evaluate on validation
             val_loss = current_model.evaluate(x_val, x_val, verbose=0)
             print(f"Validation loss: {val_loss}")
             
@@ -212,7 +150,6 @@ class ModelPruner:
         return current_model, history_all
     
     def _compute_sparsity(self, model):
-        """Compute actual sparsity of model"""
         total_weights = 0
         zero_weights = 0
         
@@ -226,27 +163,14 @@ class ModelPruner:
         return float(sparsity)
     
     def evaluate_pruned_model(self, pruned_model, x_test):
-        """
-        Evaluate pruned model performance
-        
-        Args:
-            pruned_model: Pruned model
-            x_test: Test data
-            
-        Returns:
-            Evaluation metrics
-        """
-        # Get predictions
         predictions = pruned_model.predict(x_test, verbose=0)
         original_predictions = self.model.predict(x_test, verbose=0)
         
-        # Compute metrics
         mse = np.mean(np.square(predictions - x_test))
         mae = np.mean(np.abs(predictions - x_test))
         
         original_mse = np.mean(np.square(original_predictions - x_test))
         
-        # Model sizes
         import tempfile
         with tempfile.NamedTemporaryFile(suffix='.h5', delete=True) as tmp1:
             pruned_model.save(tmp1.name)
@@ -277,22 +201,12 @@ class ModelPruner:
         return metrics
     
     def export_pruned_model(self, pruned_model, save_path, convert_to_tflite=True):
-        """
-        Export pruned model
-        
-        Args:
-            pruned_model: Pruned model
-            save_path: Save path
-            convert_to_tflite: Whether to also export TFLite version
-        """
         save_path = Path(save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Save Keras model
         pruned_model.save(save_path)
         print(f"Pruned model saved to {save_path}")
         
-        # Convert to TFLite
         if convert_to_tflite:
             converter = tf.lite.TFLiteConverter.from_keras_model(pruned_model)
             converter.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -303,7 +217,6 @@ class ModelPruner:
                 f.write(tflite_model)
             print(f"TFLite model saved to {tflite_path}")
         
-        # Save pruning info
         info_path = save_path.with_suffix('.json')
         with open(info_path, 'w') as f:
             json.dump(self.pruning_info, f, indent=2)
@@ -311,25 +224,11 @@ class ModelPruner:
 
 
 def compare_pruning_strategies(model, x_train, x_val, x_test, save_dir):
-    """
-    Compare different pruning strategies
-    
-    Args:
-        model: Original model
-        x_train: Training data
-        x_val: Validation data
-        x_test: Test data
-        save_dir: Save directory
-        
-    Returns:
-        Comparison results
-    """
     save_dir = Path(save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
     
     results = {}
     
-    # 1. Magnitude-based pruning (50% sparsity)
     print("\n" + "="*70)
     print("Testing Magnitude-Based Pruning (50% sparsity)")
     print("="*70)
@@ -339,7 +238,6 @@ def compare_pruning_strategies(model, x_train, x_val, x_test, save_dir):
     results['magnitude_50'] = pruner1.evaluate_pruned_model(pruned_model1, x_test)
     pruner1.export_pruned_model(pruned_model1, save_dir / 'magnitude_50.h5')
     
-    # 2. Magnitude-based pruning (70% sparsity)
     print("\n" + "="*70)
     print("Testing Magnitude-Based Pruning (70% sparsity)")
     print("="*70)
@@ -349,7 +247,6 @@ def compare_pruning_strategies(model, x_train, x_val, x_test, save_dir):
     results['magnitude_70'] = pruner2.evaluate_pruned_model(pruned_model2, x_test)
     pruner2.export_pruned_model(pruned_model2, save_dir / 'magnitude_70.h5')
     
-    # 3. Iterative pruning
     print("\n" + "="*70)
     print("Testing Iterative Pruning")
     print("="*70)
@@ -360,11 +257,9 @@ def compare_pruning_strategies(model, x_train, x_val, x_test, save_dir):
     results['iterative'] = pruner3.evaluate_pruned_model(pruned_model3, x_test)
     pruner3.export_pruned_model(pruned_model3, save_dir / 'iterative.h5')
     
-    # Save comparison
     with open(save_dir / 'pruning_comparison.json', 'w') as f:
         json.dump(results, f, indent=2)
     
-    # Print summary
     print("\n" + "="*70)
     print("PRUNING COMPARISON SUMMARY")
     print("="*70)

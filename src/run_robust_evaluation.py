@@ -1,7 +1,3 @@
-"""
-Robust CANShield Evaluation
-Comprehensive evaluation including robustness, uncertainty, and performance metrics
-"""
 
 import sys
 from pathlib import Path
@@ -25,12 +21,6 @@ import tensorflow as tf
 
 @hydra.main(version_base=None, config_path="../config", config_name="robust_canshield")
 def evaluate_robust_canshield(args: DictConfig) -> None:
-    """
-    Comprehensive evaluation of robust CANShield
-    
-    Args:
-        args: Configuration arguments
-    """
     print("="*70)
     print("ROBUST CANSHIELD - COMPREHENSIVE EVALUATION")
     print("="*70)
@@ -54,7 +44,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
             args.sampling_period = sampling_period
             args.window_step = args.window_step_test
             
-            # Load model
             model_path = f"{root_dir}/../artifacts/models/{dataset_name}/" \
                         f"robust_canshield_{training_mode}_{time_step}_{args.num_signals}_{sampling_period}.h5"
             
@@ -65,7 +54,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
             print(f"\nLoading model from: {model_path}")
             model = tf.keras.models.load_model(model_path)
             
-            # Load test data for different attack types
             args.data_dir = args.test_data_dir
             test_file_dict = get_list_of_files(args)
             
@@ -74,7 +62,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
             for attack_name, file_prefix in args.attacks_dict.items():
                 print(f"\n--- Evaluating on {attack_name} Attack ---")
                 
-                # Find matching file
                 matching_files = {k: v for k, v in test_file_dict.items() if file_prefix in k}
                 
                 if not matching_files:
@@ -84,17 +71,14 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                 file_name, file_path = list(matching_files.items())[0]
                 
                 try:
-                    # Load test data
                     x_test, y_test = load_data_create_images(args, file_name, file_path)
                     print(f"Loaded {len(x_test)} test samples")
                     
-                    # ========== 1. STANDARD PERFORMANCE ==========
                     print("\n1. Standard Performance Metrics...")
                     
                     predictions = model.predict(x_test, verbose=0)
                     reconstruction_errors = np.mean(np.square(predictions - x_test), axis=(1, 2, 3))
                     
-                    # Compute optimal threshold
                     thresholds = np.percentile(reconstruction_errors, [90, 95, 99])
                     best_f1 = 0
                     best_threshold = thresholds[0]
@@ -114,7 +98,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                             best_f1 = f1
                             best_threshold = threshold
                     
-                    # Compute final metrics with best threshold
                     y_pred = (reconstruction_errors > best_threshold).astype(int)
                     
                     tp = np.sum((y_pred == 1) & (y_test == 1))
@@ -128,7 +111,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                     f1_score = 2 * precision * recall / (precision + recall + 1e-10)
                     fpr = fp / (fp + tn + 1e-10)
                     
-                    # ROC-AUC
                     try:
                         roc_auc = roc_auc_score(y_test, reconstruction_errors)
                         precision_curve, recall_curve, _ = precision_recall_curve(y_test, reconstruction_errors)
@@ -152,30 +134,24 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                     print(f"  F1-Score: {f1_score:.4f}")
                     print(f"  ROC-AUC: {roc_auc:.4f}")
                     
-                    # ========== 2. ADVERSARIAL ROBUSTNESS ==========
                     print("\n2. Adversarial Robustness Evaluation...")
                     
                     evaluator = RobustnessEvaluator(model)
                     
-                    # Sample for robustness testing
                     sample_size = min(500, len(x_test))
                     x_test_sample = x_test[:sample_size]
                     
-                    # Robustness score
                     robustness_metrics = evaluator.compute_robustness_score(x_test_sample, epsilon=0.01)
                     
-                    # Cross-attack robustness
                     cross_attack = evaluator.evaluate_cross_attack_robustness(x_test_sample)
                     
                     print(f"  Robustness Score: {robustness_metrics['robustness_score']:.4f}")
                     print(f"  Error Stability: {robustness_metrics['error_stability']:.4f}")
                     
-                    # ========== 3. UNCERTAINTY QUANTIFICATION ==========
                     print("\n3. Uncertainty Quantification...")
                     
                     uncertainty_estimator = UncertaintyEstimator(model)
                     
-                    # Uncertainty-aware detection
                     uncertainty_results = uncertainty_aware_detection(
                         model, x_test_sample, best_threshold, confidence_threshold=0.8
                     )
@@ -184,17 +160,14 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                     print(f"  Mean Confidence: {np.mean(uncertainty_results['confidence']):.4f}")
                     print(f"  Mean Uncertainty: {uncertainty_results['uncertainty'].mean():.6f}")
                     
-                    # ========== 4. INFERENCE TIME ==========
                     print("\n4. Inference Time Benchmark...")
                     
                     import time
                     sample_input = x_test[:1]
                     
-                    # Warmup
                     for _ in range(10):
                         _ = model.predict(sample_input, verbose=0)
                     
-                    # Benchmark
                     times = []
                     for _ in range(100):
                         start = time.perf_counter()
@@ -211,7 +184,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                     
                     print(f"  Mean Inference Time: {inference_metrics['mean_ms']:.2f} ± {inference_metrics['std_ms']:.2f} ms")
                     
-                    # ========== AGGREGATE RESULTS ==========
                     
                     attack_results[attack_name] = {
                         'standard_metrics': standard_metrics,
@@ -233,11 +205,9 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                     import traceback
                     traceback.print_exc()
             
-            # Save results for this configuration
             config_key = f"ts{time_step}_sp{sampling_period}"
             results_all[config_key] = attack_results
             
-            # Print summary
             print(f"\n{'='*70}")
             print(f"SUMMARY - TimeStep={time_step}, SamplingPeriod={sampling_period}")
             print(f"{'='*70}")
@@ -252,7 +222,6 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
                 
                 print(f"{attack_name:<15} {f1:<12.4f} {rob:<12.4f} {conf:<12.4f} {inf_time:<15.2f}")
     
-    # ========== SAVE COMPREHENSIVE RESULTS ==========
     
     results_dir = Path(f"{root_dir}/../artifacts/evaluation_results/{dataset_name}")
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -266,12 +235,10 @@ def evaluate_robust_canshield(args: DictConfig) -> None:
     print(f"{'='*70}")
     print(f"Results saved to: {results_file}")
     
-    # Generate summary report
     generate_summary_report(results_all, results_dir / f"summary_{training_mode}.txt")
 
 
 def generate_summary_report(results, save_path):
-    """Generate human-readable summary report"""
     
     with open(save_path, 'w') as f:
         f.write("="*80 + "\n")
@@ -282,7 +249,6 @@ def generate_summary_report(results, save_path):
             f.write(f"\nConfiguration: {config_key}\n")
             f.write("-"*80 + "\n\n")
             
-            # Aggregate metrics across attacks
             f1_scores = []
             robustness_scores = []
             inference_times = []

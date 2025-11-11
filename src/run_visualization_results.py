@@ -35,20 +35,16 @@ def get_conf_matric(y_true, y_pred):
 
 
 def plot_auroc_curve(args, fprs, tprs, fig_name):
-    # Create ROC curve
     root_dir = args.root_dir
     dataset_name = args.dataset_name
     auc_score = auc(fprs, tprs)
     attack_name = fig_name.split("_")[-1]
     fig, ax = plt.subplots(figsize=(3.5, 2.5))
 
-    # Plot AUROC curve
     ax.plot(fprs, tprs, label=f"AUROC = {auc_score:.3f}", color='blue', linewidth=2)
 
-    # Plot random baseline
     ax.plot([0, 1], [0, 1], linestyle='--', color='gray', label="Random Baseline")
 
-    # Labels and title
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
     ax.set_title(f"{attack_name} Attack")
@@ -57,7 +53,6 @@ def plot_auroc_curve(args, fprs, tprs, fig_name):
 
     plt.tight_layout()
 
-    # Save figure
     fig_dir = Path(f"{root_dir}/../plots/{dataset_name}/auroc_curves/{fig_name}")
     fig_dir.parent.mkdir(exist_ok=True, parents=True)
     plt.savefig(f"{fig_dir}.jpg", dpi=250)
@@ -91,7 +86,6 @@ def get_canshield_confusion_mat(args, heatmap_auc_dict, prediction_df_final):
 
 
     max_fpr_th = 0.01
-    # sampling_periods = [1, 5, 10]
     
     canshield_cm = {}
     for sampling_period in sampling_periods:
@@ -101,10 +95,10 @@ def get_canshield_confusion_mat(args, heatmap_auc_dict, prediction_df_final):
     
     for file_name in attacks_dict.keys():
         ensemble_data = 0
-        prediction_df_final_file = prediction_df_final[prediction_df_final['Attack'] == file_name].copy() #[['Label', 'Loss']].values
+        prediction_df_final_file = prediction_df_final[prediction_df_final['Attack'] == file_name].copy()
 
         for sampling_period in sampling_periods:
-            prediction_df_final_ind = prediction_df_final_file[prediction_df_final_file['Sampling Period'] == sampling_period].copy() #[['Label', 'Loss']].values
+            prediction_df_final_ind = prediction_df_final_file[prediction_df_final_file['Sampling Period'] == sampling_period].copy()
             
             if sampling_period == 1:
                 y_true = prediction_df_final_ind['Label']
@@ -126,8 +120,6 @@ def get_canshield_confusion_mat(args, heatmap_auc_dict, prediction_df_final):
             canshield_cm[f"CANShield-{sampling_period}"][f'{file_name}_tpr'] = tpr
             canshield_cm[f"CANShield-{sampling_period}"][f'{file_name}_fpr'] = fpr
             plot_auroc_curve(args, fprs, tprs, f"CANShield-{sampling_period}_{dataset_name}_{sampling_period}_{file_name}")
-            # Get canshield ensemble data
-            # ensemble_data += prediction_df_final_ind[['Label', 'Loss']].values
             samp_data = prediction_df_final_ind[['Label', 'Loss']].values
             try:
                 ensemble_data = ensemble_data + samp_data
@@ -154,7 +146,6 @@ def get_canshield_confusion_mat(args, heatmap_auc_dict, prediction_df_final):
     canshield_cm_df = np.round(pd.DataFrame(canshield_cm).T,3)
     canshield_cm_df['Model'] = canshield_cm_df.index
     canshield_cm_total = pd.concat([canshield_cm_df, baseline_cm_df], ignore_index= True, axis = 0)
-    # canshield_cm_total.to_csv(f"{root_dir}/../data/results/{dataset_name}/canshield_cm_total.csv")
 
     for file_name in attacks_dict.keys():
         tpr_data = canshield_cm_total[f"{file_name}_tpr"].values
@@ -175,13 +166,10 @@ def get_canshield_baselines(args, heatmap_auc_dict, prediction_df_final):
     per_of_samples = args.per_of_samples
 
 
-    # Get autoencoder base data
     base_df = prediction_df_final[prediction_df_final['Sampling Period'] == 1]
     base_df['Model'] = "Mean-Absolute"
     base_df["Label Name"] = label_list[base_df['Label']]
-    # base_df['Prediction'] = base_df['Prediction']/base_df['Prediction'].max()
 
-    # Get canshield ensemble data
     ensemble_data = 0
     for sampling_period in sampling_periods:
         samp_data = prediction_df_final[prediction_df_final['Sampling Period'] == sampling_period][['Label', 'Loss']].values
@@ -203,27 +191,17 @@ def get_canshield_baselines(args, heatmap_auc_dict, prediction_df_final):
     canshield_df['Loss'] = ensemble_data[:,1]
     canshield_df['Model'] = "CANShield-Ensemble"
 
-    # Get the auc scores...
     baseline_autoencoder_auc = {}
     baseline_canshield_auc = {}
 
-    # try:
-    #     baseline_cm = pd.read_csv(f"{root_dir}/../data/results/{dataset_name}/baseline_cm.csv")
-    #     baseline_cm.index = baseline_cm['Model']
-    # except FileNotFoundError as e:
-    #     print(e)
-    #     print("Add baseline data to")
-    #     print(f"{root_dir}/../data/results/{dataset_name}/baseline_cm.csv")
 
     for file_name in attacks_dict.keys():
 
-        # Baseline autoencoder
         base_df_cut = base_df[base_df["Attack"] == file_name]
         fprs, tprs, thresholds = roc_curve(base_df_cut['Label'], base_df_cut['Prediction'])
         roc_auc = auc(fprs, tprs)
         baseline_autoencoder_auc[file_name] = roc_auc
         
-        # Baseline canshields
         base_df_cut = canshield_df[canshield_df["Attack"] == file_name]
         fprs, tprs, thresholds = roc_curve(base_df_cut['Label'], base_df_cut['Prediction'])
 
@@ -235,7 +213,6 @@ def get_canshield_baselines(args, heatmap_auc_dict, prediction_df_final):
     baseline_autoencoder_auc_df = pd.DataFrame(pd.Series(baseline_autoencoder_auc)).T
     baseline_autoencoder_auc_df.index = ['CANShield-Base']
 
-    # Get canshield-i data
     canshield_each_dict = {}
     for file_name in attacks_dict.keys():
         canshield_each ={}
@@ -257,13 +234,11 @@ def get_canshield_baselines(args, heatmap_auc_dict, prediction_df_final):
         canshield_each_dict[f"{file_name}"] = canshield_each
     baseline_comparison_auc_df = pd.DataFrame(canshield_each_dict)
     
-    # Get existing baselines
     base_auc_others = pd.DataFrame([], columns = ['Flooding' ,'Suppress', 'Plateau', 'Continuous', 'Playback'])
     base_auc_others.loc['CANet'] = [0.979 ,0.882, 0.983, 0.936, 0.974]
     base_auc_others.loc['Autoencoder'] = [0.755  ,0.563 ,0.530 ,0.874 ,0.489]   
     base_auc_others.loc['Predictive']   = [0.722 ,0.561 ,0.530, 0.874, 0.489]   
     
-    # Merge all the data...
     baseline_auc_final_df = np.round(pd.concat([baseline_autoencoder_auc_df, baseline_comparison_auc_df, baseline_canshield_auc_df, base_auc_others], ignore_index=False), 3)
     baseline_dir = Path(f'{root_dir}/../data/results/{dataset_name}/canshield_{dataset_name}_{eval_type}_{per_of_samples}_baseline_auc_final_df.csv')
     baseline_dir.parent.mkdir(exist_ok=True, parents=True)
@@ -277,14 +252,9 @@ def visualize_results(args : DictConfig) -> None:
     heatmap_auc_dict = None
     prediction_df_final = None
     
-    # Calculate the AUCROC for different configuration... 
-    # Increase in the AUC scores in different attacks with three-steps loss analysis 
     heatmap_auc_dict = create_heatmap_auc_dict(args)
-    # plot_auc_improvement_with_three_steps(args, heatmap_auc_dict)
     
-    # Plot the impact of different sampling periods
     prediction_df_final = anomalyScores_for_diff_canshields(args)
-    # plot_anomalyScores_for_diff_canshields(args, prediction_df_final)
     
 
     get_canshield_baselines(args, heatmap_auc_dict, prediction_df_final)

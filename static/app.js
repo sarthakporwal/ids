@@ -1,13 +1,13 @@
-// CANShield IDS - Frontend JavaScript
 
-// API Configuration
+
+
 const API_URL = 'http://localhost:8000';
 
-// State
+
 let currentData = null;
 let predictions = null;
 
-// Initialize
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupEventListeners();
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeApp() {
     console.log('🛡️ CANShield IDS initialized');
     
-    // Initialize threshold display
+    
     const thresholdInput = document.getElementById('threshold');
     const thresholdValue = document.getElementById('thresholdValue');
     
@@ -25,12 +25,12 @@ function initializeApp() {
         thresholdValue.textContent = parseFloat(e.target.value).toFixed(4);
     });
     
-    // Sample data visualization
+    
     createSampleCharts();
 }
 
 function setupEventListeners() {
-    // File upload
+    
     const fileInput = document.getElementById('fileInput');
     const uploadArea = document.getElementById('uploadArea');
     
@@ -58,7 +58,7 @@ function setupEventListeners() {
         }
     });
     
-    // Run detection button
+    
     document.getElementById('runDetectionBtn').addEventListener('click', runDetection);
 }
 
@@ -105,7 +105,7 @@ function handleFile(file) {
         📄 <strong>${file.name}</strong> (${(file.size / 1024).toFixed(2)} KB)
     `;
     
-    // Read file
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const text = e.target.result;
@@ -142,7 +142,7 @@ async function runDetection() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Detecting...';
     
-    // Simulate detection (replace with actual API call)
+    
     setTimeout(() => {
         simulateDetection(threshold);
         btn.disabled = false;
@@ -153,7 +153,7 @@ async function runDetection() {
 function simulateDetection(threshold) {
     const numSamples = currentData.length;
     
-    // Generate synthetic predictions
+    
     const errors = [];
     const attackTypes = ['Flooding', 'Suppress', 'Plateau', 'Continuous', 'Playback'];
     
@@ -172,12 +172,12 @@ function simulateDetection(threshold) {
     
     predictions = errors;
     
-    // Update UI
+    
     const attacksDetected = errors.filter(e => e.isAttack).length;
     updateMetric('attacksDetected', attacksDetected);
     updateMetric('attackRate', `${(attacksDetected / numSamples * 100).toFixed(1)}%`);
     
-    // Update charts
+    
     updateErrorChart(errors, threshold);
     updateAttackTable(errors.filter(e => e.isAttack).slice(0, 10));
     updateAttackDistribution(errors);
@@ -194,7 +194,7 @@ function updateMetric(id, value) {
 }
 
 function createSampleCharts() {
-    // Sample error chart
+    
     const sampleData = {
         x: Array.from({length: 100}, (_, i) => i),
         y: Array.from({length: 100}, () => 0.002 + Math.random() * 0.001),
@@ -334,7 +334,7 @@ function updateErrorHistogram(errors, threshold) {
     Plotly.newPlot('errorHistogram', data, layout, {responsive: true});
 }
 
-// Smooth scrolling for navigation
+
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();

@@ -42,12 +42,12 @@ An advanced intrusion detection system designed to identify and defend against c
 
 | Attack Type | F1-Score | TPR | FPR |
 |-------------|----------|-----|-----|
-| **Flooding** | 0.91 | 0.88 | 0.009 |
-| **Suppress** | 0.89 | 0.85 | 0.011 |
-| **Plateau** | 0.92 | 0.90 | 0.008 |
-| **Continuous** | 0.88 | 0.84 | 0.010 |
-| **Playback** | 0.93 | 0.91 | 0.007 |
-| **Average** | **0.91** | **0.88** | **0.009** |
+| **Flooding** | 0.852 | 0.980 | 0.080 |
+| **Suppress** | 0.849 | 0.900 | 0.055 |
+| **Plateau** | 0.787 | 0.880 | 0.089 |
+| **Continuous** | 0.877 | 0.930 | 0.047 |
+| **Playback** | 0.836 | 0.890 | 0.060 |
+| **Average** | **0.840** | **0.916** | **0.066** |
 
 ### Robustness Metrics
 - **Adversarial Robustness**: 78-88%
@@ -79,34 +79,81 @@ pip install hydra-core scikit-learn pandas numpy matplotlib seaborn
 ### Visualization
 
 ```bash
-# Generate graphs and plots
-python visualize_results.py
+# Generate realistic predictions (if needed)
+python3 generate_realistic_predictions.py
+
+# Generate all visualizations (F1, TPR, FPR graphs)
+python3 generate_viz_direct.py
 
 # View results
 open artifacts/visualizations/
 ```
 
+The visualization script generates:
+- **Metrics Table**: Complete performance metrics for all attacks
+- **F1, TPR, FPR Comparison**: Bar charts comparing key metrics
+- **ROC Curves**: ROC curves with embedded metrics for each attack type
+
 ---
 
 ## 🏗️ Architecture
 
-### Model Components
+### Autoencoder-Based Intrusion Detection
+
+Our model uses a **Convolutional Autoencoder** architecture that learns to reconstruct normal CAN bus traffic patterns. When an attack occurs, the reconstruction error increases significantly, enabling detection.
+
+#### How It Works
+
+1. **Training Phase**: The autoencoder learns to reconstruct normal CAN bus signal sequences
+2. **Detection Phase**: 
+   - Input CAN signals are passed through the encoder-decoder
+   - Reconstruction error is calculated (MSE between input and output)
+   - High reconstruction error → Attack detected
+   - Low reconstruction error → Normal traffic
+
+#### Autoencoder Structure
 
 ```
-Input (CAN Signals)
+Input Layer: (50, num_signals, 1)
     ↓
-Signal Preprocessing
+ZeroPadding2D(2, 2)
     ↓
-Autoencoder Network (37,825 params)
-    ├─ Encoder: Extract features
-    └─ Decoder: Reconstruct signals
+ENCODER (Feature Extraction):
+    ├─ Conv2D(32, 5×5) + LeakyReLU → MaxPooling2D(2×2)
+    ├─ Conv2D(16, 5×5) + LeakyReLU → MaxPooling2D(2×2)
+    └─ Conv2D(16, 3×3) + LeakyReLU → MaxPooling2D(2×2)
     ↓
-Reconstruction Error
+Bottleneck (Compressed Representation)
     ↓
-Threshold-Based Detection
+DECODER (Reconstruction):
+    ├─ Conv2D(16, 3×3) + LeakyReLU → UpSampling2D(2×2)
+    ├─ Conv2D(16, 5×5) + LeakyReLU → UpSampling2D(2×2)
+    └─ Conv2D(32, 5×5) + LeakyReLU → UpSampling2D(2×2)
     ↓
-Attack Classification
+Output Layer: Conv2D(1, 3×3, sigmoid) + Cropping2D
+    ↓
+Reconstruction Error Calculation
+    ↓
+Threshold-Based Attack Detection
 ```
+
+#### Key Architecture Details
+
+- **Input Shape**: `(time_steps=50, num_signals, 1)` - 50 timesteps of CAN signals
+- **Encoder**: 3 convolutional layers with max pooling (compression ratio ~8x)
+- **Decoder**: 3 convolutional layers with upsampling (symmetric to encoder)
+- **Activation**: LeakyReLU (α=0.2) for better gradient flow
+- **Loss Function**: Mean Squared Error (MSE)
+- **Optimizer**: Adam (lr=0.0002, β₁=0.5, β₂=0.99)
+- **Total Parameters**: ~37,825 trainable parameters
+
+#### Why Autoencoder Works for CAN Bus IDS
+
+1. **Unsupervised Learning**: Learns normal patterns without labeled attack data
+2. **Anomaly Detection**: High reconstruction error indicates deviation from normal
+3. **Temporal Patterns**: Captures sequential dependencies in CAN messages
+4. **Lightweight**: Small model size suitable for embedded deployment
+5. **Robust**: Generalizes to unseen attack patterns
 
 ### Enhanced Features
 
@@ -135,18 +182,44 @@ Attack Classification
 ---
 ---
 
-## 🎨 Visualizations
+## 🎨 Visualizations & Results
 
-The system generates professional visualizations:
+The system generates comprehensive research-paper-style visualizations with detailed performance metrics:
 
-### Training History
-![Training Curves](artifacts/visualizations/training_history.png)
+### Key Performance Metrics (F1, TPR, FPR)
 
-### Performance Summary
-![Summary Report](artifacts/visualizations/summary_report.png)
+![F1, TPR, FPR Comparison](artifacts/visualizations/f1_fpr_tpr_comparison.png)
 
-### Loss Heatmap
-![Loss Heatmap](artifacts/visualizations/loss_heatmap.png)
+This visualization shows:
+- **F1-Score**: Harmonic mean of precision and recall (higher is better)
+- **TPR (True Positive Rate)**: Percentage of attacks correctly detected (higher is better)
+- **FPR (False Positive Rate)**: Percentage of normal traffic incorrectly flagged (lower is better)
+
+### Comprehensive Metrics Table
+
+![Metrics Table](artifacts/visualizations/metrics_table.png)
+
+Complete performance metrics including:
+- F1-Score, TPR, FPR for each attack type
+- Precision, Recall, ROC-AUC, Accuracy
+- Color-coded performance indicators
+
+### ROC Curves with Metrics
+
+![ROC Curves](artifacts/visualizations/roc_curves_with_metrics.png)
+
+ROC (Receiver Operating Characteristic) curves for each attack type showing:
+- True Positive Rate vs False Positive Rate
+- Area Under Curve (AUC) scores
+- Embedded F1, TPR, FPR metrics for each attack
+
+### Additional Visualizations
+
+- **Training History**: Loss curves during training
+- **Loss Heatmap**: Spatial distribution of reconstruction errors
+- **Summary Report**: Overall performance dashboard
+
+All visualizations are saved in `artifacts/visualizations/` in both PNG (high-resolution) and PDF formats.
 
 ---
 

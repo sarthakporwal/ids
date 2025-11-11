@@ -1,12 +1,7 @@
-"""
-Fix for TensorFlow/Keras imports on macOS
-Run this before training: python fix_imports.py
-"""
 
 import sys
 import os
 
-# Force TensorFlow 2.x behavior
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
