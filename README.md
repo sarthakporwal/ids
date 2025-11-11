@@ -6,7 +6,7 @@ An advanced intrusion detection system designed to identify and defend against c
 
 ---
 
-## 🎯 Key Features
+##  Key Features
 
 ### 🔒 **Adversarial Robustness**
 - **FGSM, PGD, and C&W Attacks**: Defense against gradient-based adversarial perturbations
@@ -89,6 +89,37 @@ The visualization script generates:
 - **Metrics Table**: Complete performance metrics for all attacks
 - **F1, TPR, FPR Comparison**: Bar charts comparing key metrics
 - **ROC Curves**: ROC curves with embedded metrics for each attack type
+
+### Web Interface
+
+The project includes multiple frontend options:
+
+#### Option 1: Streamlit Dashboard (Recommended)
+```bash
+# Install web dependencies
+pip install -r requirements_web.txt
+
+# Run Streamlit app
+streamlit run app.py
+```
+Access at: http://localhost:8501
+
+#### Option 2: Static HTML Frontend
+```bash
+# Run static server
+python3 serve_static.py
+```
+Access at: http://localhost:8080
+
+#### Option 3: FastAPI REST API
+```bash
+# Run API server
+python3 api_backend.py
+# Or: uvicorn api_backend:app --reload
+```
+API docs at: http://localhost:8000/docs
+
+See [`FRONTEND_GUIDE.md`](FRONTEND_GUIDE.md) for detailed instructions.
 
 ---
 

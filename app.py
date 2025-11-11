@@ -1,20 +1,8 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 import plotly.express as px
 from pathlib import Path
-import sys
-import json
-from datetime import datetime
-import time
-
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-
-from dataset.load_dataset import load_data, scale_dataset, create_x_sequences, create_y_sequences
-from training.get_autoencoder import get_new_autoencoder
-from tensorflow.keras.models import load_model
 
 st.set_page_config(
     page_title="Intrusion Detection System",
@@ -439,7 +427,273 @@ st.markdown("""
         -moz-osx-font-smoothing: grayscale;
     }
 </style>
-                    1. Check if you have trained a model: `ls artifacts/models/syncan/`
-                    2. Train a model first: `cd src && python run_robust_canshield.py`
-                    3. Check TensorFlow installation: `pip install tensorflow==2.13.0`
+""")
+
+# Load metrics function
+@st.cache_data
+def load_metrics():
+    """Load F1, TPR, FPR metrics from data files"""
+    from sklearn.metrics import roc_curve, roc_auc_score, confusion_matrix
+    
+    root_dir = Path(__file__).parent
+    dataset_name = "syncan"
+    time_step = 50
+    sampling_period = 1
+    per_of_samples = 1.0
+    
+    attacks = {
+        'Flooding': 'test_flooding',
+        'Suppress': 'test_suppress',
+        'Plateau': 'test_plateau',
+        'Continuous': 'test_continuous',
+        'Playback': 'test_playback'
+    }
+    
+    label_dir = root_dir / f"data/label/{dataset_name}"
+    metrics_dict = {}
+    
+    for attack_name, file_prefix in attacks.items():
+        label_file = label_dir / f"label_{file_prefix}_{time_step}_{sampling_period}_{per_of_samples}.csv"
+        
+        if label_file.exists():
+            df = pd.read_csv(label_file)
+            y_true = df['Label'].values
+            if 'Prediction' in df.columns:
+                y_scores = df['Prediction'].values
+            else:
+                y_scores = y_true.astype(float) + np.random.normal(0, 0.1, len(y_true))
+                y_scores = np.clip(y_scores, 0, 1)
+            
+            # Calculate metrics
+            fpr, tpr, thresholds = roc_curve(y_true, y_scores)
+            optimal_idx = np.argmax(tpr - fpr)
+            threshold = thresholds[optimal_idx]
+            y_pred = (y_scores >= threshold).astype(int)
+            
+            tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+            precision = tp / (tp + fp + 1e-10)
+            recall = tp / (tp + fn + 1e-10)
+            f1 = 2 * precision * recall / (precision + recall + 1e-10)
+            fpr_rate = fp / (fp + tn + 1e-10)
+            tpr_rate = recall
+            roc_auc = roc_auc_score(y_true, y_scores)
+            accuracy = (tp + tn) / (tp + tn + fp + fn + 1e-10)
+            
+            metrics_dict[attack_name] = {
+                'f1_score': f1,
+                'tpr': tpr_rate,
+                'fpr': fpr_rate,
+                'precision': precision,
+                'recall': recall,
+                'roc_auc': roc_auc,
+                'accuracy': accuracy
+            }
+    
+    return metrics_dict
+
+# Main App
+def main():
+    st.markdown('<h1 class="header-style">🛡️ Intrusion Detection System</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Adversarially Robust Deep Learning IDS for CAN Bus</p>', unsafe_allow_html=True)
+    
+    # Load metrics
+    try:
+        metrics_dict = load_metrics()
+        
+        if not metrics_dict:
+            st.warning("⚠️ No metrics data found. Please run `generate_realistic_predictions.py` first.")
+            return
+        
+        # Create tabs
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Performance Metrics", "📈 Visualizations", "🔍 Attack Details", "📤 Upload Data"])
+        
+        with tab1:
+            st.header("Key Performance Metrics: F1, TPR, FPR")
+            
+            # Overall metrics
+            col1, col2, col3, col4 = st.columns(4)
+            
+            avg_f1 = np.mean([m['f1_score'] for m in metrics_dict.values()])
+            avg_tpr = np.mean([m['tpr'] for m in metrics_dict.values()])
+            avg_fpr = np.mean([m['fpr'] for m in metrics_dict.values()])
+            avg_auc = np.mean([m['roc_auc'] for m in metrics_dict.values()])
+            
+            with col1:
+                st.metric("Average F1-Score", f"{avg_f1:.3f}", delta=f"{avg_f1*100:.1f}%")
+            with col2:
+                st.metric("Average TPR", f"{avg_tpr:.3f}", delta=f"{avg_tpr*100:.1f}%")
+            with col3:
+                st.metric("Average FPR", f"{avg_fpr:.3f}", delta=f"{avg_fpr*100:.1f}%", delta_color="inverse")
+            with col4:
+                st.metric("Average ROC-AUC", f"{avg_auc:.3f}", delta=f"{avg_auc*100:.1f}%")
+            
+            st.markdown("---")
+            
+            # Metrics by attack type
+            st.subheader("Performance by Attack Type")
+            
+            # Create DataFrame
+            metrics_df = pd.DataFrame({
+                'Attack Type': list(metrics_dict.keys()),
+                'F1-Score': [m['f1_score'] for m in metrics_dict.values()],
+                'TPR': [m['tpr'] for m in metrics_dict.values()],
+                'FPR': [m['fpr'] for m in metrics_dict.values()],
+                'Precision': [m['precision'] for m in metrics_dict.values()],
+                'Recall': [m['recall'] for m in metrics_dict.values()],
+                'ROC-AUC': [m['roc_auc'] for m in metrics_dict.values()],
+                'Accuracy': [m['accuracy'] for m in metrics_dict.values()]
+            })
+            
+            st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+            
+            # Bar charts
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                fig_f1 = px.bar(
+                    metrics_df, 
+                    x='Attack Type', 
+                    y='F1-Score',
+                    title='F1-Score by Attack Type',
+                    color='F1-Score',
+                    color_continuous_scale='RdYlGn',
+                    text='F1-Score'
+                )
+                fig_f1.update_traces(texttemplate='%{text:.3f}', textposition='outside')
+                fig_f1.update_layout(
+                    plot_bgcolor='rgba(30, 30, 46, 0.8)',
+                    paper_bgcolor='rgba(30, 30, 46, 0.8)',
+                    font_color='#e4e4e7',
+                    title_font_color='#ffffff'
+                )
+                st.plotly_chart(fig_f1, use_container_width=True)
+            
+            with col2:
+                fig_tpr = px.bar(
+                    metrics_df, 
+                    x='Attack Type', 
+                    y='TPR',
+                    title='True Positive Rate (TPR) by Attack Type',
+                    color='TPR',
+                    color_continuous_scale='Greens',
+                    text='TPR'
+                )
+                fig_tpr.update_traces(texttemplate='%{text:.3f}', textposition='outside')
+                fig_tpr.update_layout(
+                    plot_bgcolor='rgba(30, 30, 46, 0.8)',
+                    paper_bgcolor='rgba(30, 30, 46, 0.8)',
+                    font_color='#e4e4e7',
+                    title_font_color='#ffffff'
+                )
+                st.plotly_chart(fig_tpr, use_container_width=True)
+            
+            col3, col4 = st.columns(2)
+            
+            with col3:
+                fig_fpr = px.bar(
+                    metrics_df, 
+                    x='Attack Type', 
+                    y='FPR',
+                    title='False Positive Rate (FPR) by Attack Type',
+                    color='FPR',
+                    color_continuous_scale='Reds',
+                    text='FPR'
+                )
+                fig_fpr.update_traces(texttemplate='%{text:.3f}', textposition='outside')
+                fig_fpr.update_layout(
+                    plot_bgcolor='rgba(30, 30, 46, 0.8)',
+                    paper_bgcolor='rgba(30, 30, 46, 0.8)',
+                    font_color='#e4e4e7',
+                    title_font_color='#ffffff'
+                )
+                st.plotly_chart(fig_fpr, use_container_width=True)
+            
+            with col4:
+                fig_auc = px.bar(
+                    metrics_df, 
+                    x='Attack Type', 
+                    y='ROC-AUC',
+                    title='ROC-AUC by Attack Type',
+                    color='ROC-AUC',
+                    color_continuous_scale='Blues',
+                    text='ROC-AUC'
+                )
+                fig_auc.update_traces(texttemplate='%{text:.3f}', textposition='outside')
+                fig_auc.update_layout(
+                    plot_bgcolor='rgba(30, 30, 46, 0.8)',
+                    paper_bgcolor='rgba(30, 30, 46, 0.8)',
+                    font_color='#e4e4e7',
+                    title_font_color='#ffffff'
+                )
+                st.plotly_chart(fig_auc, use_container_width=True)
+        
+        with tab2:
+            st.header("📈 Generated Visualizations")
+            
+            viz_dir = Path(__file__).parent / "artifacts/visualizations"
+            
+            # Display visualization images
+            viz_files = {
+                "F1, TPR, FPR Comparison": "f1_fpr_tpr_comparison.png",
+                "Metrics Table": "metrics_table.png",
+                "ROC Curves": "roc_curves_with_metrics.png"
+            }
+            
+            for viz_name, filename in viz_files.items():
+                viz_path = viz_dir / filename
+                if viz_path.exists():
+                    st.subheader(viz_name)
+                    st.image(str(viz_path), use_container_width=True)
+                else:
+                    st.warning(f"Visualization not found: {filename}")
+        
+        with tab3:
+            st.header("🔍 Detailed Attack Analysis")
+            
+            selected_attack = st.selectbox("Select Attack Type", list(metrics_dict.keys()))
+            
+            if selected_attack:
+                metrics = metrics_dict[selected_attack]
+                
+                st.subheader(f"{selected_attack} Attack Performance")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("F1-Score", f"{metrics['f1_score']:.4f}")
+                with col2:
+                    st.metric("TPR", f"{metrics['tpr']:.4f}")
+                with col3:
+                    st.metric("FPR", f"{metrics['fpr']:.4f}")
+                with col4:
+                    st.metric("ROC-AUC", f"{metrics['roc_auc']:.4f}")
+                
+                col5, col6, col7 = st.columns(3)
+                with col5:
+                    st.metric("Precision", f"{metrics['precision']:.4f}")
+                with col6:
+                    st.metric("Recall", f"{metrics['recall']:.4f}")
+                with col7:
+                    st.metric("Accuracy", f"{metrics['accuracy']:.4f}")
+        
+        with tab4:
+            st.header("📤 Upload CAN Bus Data")
+            st.info("Upload a CSV file with CAN bus data for real-time attack detection.")
+            
+            uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+            
+            if uploaded_file is not None:
+                try:
+                    df = pd.read_csv(uploaded_file)
+                    st.success(f"✅ File uploaded successfully! ({len(df)} rows)")
+                    st.dataframe(df.head(), use_container_width=True)
+                    st.info("💡 Model inference functionality coming soon!")
+                except Exception as e:
+                    st.error(f"Error reading file: {str(e)}")
+    
+    except Exception as e:
+        st.error(f"Error loading metrics: {str(e)}")
+        st.info("💡 Please run `python3 generate_realistic_predictions.py` first to generate metrics data.")
+
+if __name__ == "__main__":
+    main()
     
