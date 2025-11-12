@@ -297,3 +297,9 @@ This project builds upon:
 
 - [ ] Support for additional CAN datasets (ROAD, Car-Hacking)
 - [ ] Mobile deployment (iOS/Android)
+- [ ] Add a user-friendly interface for easier monitoring.
+- [ ] Improve the system to handle larger vehicle fleets.
+- [ ] Explore new deep learning models for better detection.
+- [ ] Ensure compatibility with automotive cybersecurity standards.
+- [ ] Develop real-time attack prevention features.
+- [ ] Research privacy-safe model updates across vehicles.
